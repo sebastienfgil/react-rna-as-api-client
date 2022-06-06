@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import Association from "./models/Association";
 import useXhrRna from "./hooks/useXhrRna";
@@ -7,83 +7,138 @@ import {
   TextField,
   Container,
   Grid,
-  InputAdornment,
-  Paper,
+  Button,
+  Stack,
+  Collapse,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-
-import { FicheAssociation } from "./components/ficheAssociation";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import ExpandMore from "@mui/icons-material/ExpandMore";
 
 import "./App.css";
-import { SearchResults } from "./components/searchResults";
+
+import { Header } from "./components/Header";
+import { SearchResults } from "./components/SearchResults";
+import { FicheAssociation } from "./components/FicheAssociation";
 
 function App() {
-  const [searchInputValue, setSearchValue] = useState("");
-  const [page, setPage] = useState(0);
+  const [searchInputValue, setSearchInputValue] = useState("");
+  const [searchValue, setSearchValue] = useState("");
+  const [requestedPage, setRequestedPage] = useState(0);
+  const [displayedPage, setDisplayedPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  let emptyAssoArray: Association[] = new Array<Association>();
+  const [rawAssociationsList, setRawAssociationsList] =
+    useState(emptyAssoArray);
+  const [filteredAssociationsList, setFilteredAssociationsList] =
+    useState(emptyAssoArray);
   const [selectedAssociation, setSelectedAssociation] = useState(
     new Association()
   );
 
-  const urlRna = useUrlRna(searchInputValue, page, rowsPerPage);
-  const [associationsList, totalResults] = useXhrRna(searchInputValue, urlRna);
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [postCodeInputValue, setPostCodeInputValue] = useState("");
 
-  const handleSearchInputChange = (value: string) => {
-    if (value.length < 3) {
-      setSelectedAssociation(new Association());
-      setPage(0);
+  useEffect(() => {
+    if (postCodeInputValue && postCodeInputValue.length > 0) {
+      let filteredListTemp: Association[] = new Array<Association>();
+      // setFilteredAssociationsList([]);
+      let postCodes: string[] = postCodeInputValue
+        .replaceAll(";", ",")
+        .split(",")
+        .map((v) => v.trim());
+
+      rawAssociationsList.forEach((asso: Association) => {
+        let hasPostCode: Boolean = false;
+        for (let i = 0; i < postCodes.length; i++) {
+          let str: string = postCodes.at(i) as string;
+          if (typeof str !== "undefined") {
+            if (asso.adresseCodePostal.substring(0, str.length) === str) {
+              hasPostCode = true;
+              break;
+            }
+          }
+        }
+        if (hasPostCode) filteredListTemp = filteredListTemp.concat(asso);
+      });
+      setFilteredAssociationsList(filteredListTemp);
+    } else {
+      setFilteredAssociationsList(rawAssociationsList);
     }
-    setSearchValue(value);
+  }, [postCodeInputValue, rawAssociationsList]);
+
+  const urlRna = useUrlRna(searchValue, requestedPage);
+  useXhrRna(
+    urlRna,
+    rawAssociationsList,
+    setRawAssociationsList,
+    setRequestedPage
+  );
+
+  const handleFilterexpansion = () => {
+    setFiltersExpanded(!filtersExpanded);
+  };
+
+  const handlePostCodeInputChange = (value: string) => {
+    setPostCodeInputValue(value);
   };
 
   return (
     <>
-      <Paper elevation={1}>
-        <header className="App-header">
-          <Container className="App" sx={{ width: "100vw" }}>
-            <Grid
-              container
-              spacing={2}
-              sx={{ flex: "1", justifySelf: "center" }}
-            >
-              <Grid item xs={4}>
-                <TextField
-                  id="outlined-basic"
-                  label={null}
-                  variant="standard"
-                  value={searchInputValue}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon />
-                      </InputAdornment>
-                    ),
-                  }}
-                  onChange={(e) => handleSearchInputChange(e.target.value)}
-                  sx={{ width: "100%" }}
-                />
-              </Grid>
-            </Grid>
-          </Container>
-        </header>
-      </Paper>
+      {Header(
+        rawAssociationsList,
+        setRawAssociationsList,
+        searchInputValue,
+        setSearchInputValue,
+        setSearchValue,
+        setRequestedPage
+      )}
       <Container className="App" sx={{ width: "100vw", height: "100vh" }}>
-        <Grid container spacing={2} sx={{ flex: "1", justifySelf: "center" }}>
-          <Grid item xs={12}></Grid>
-          <Grid item xs={4} sx={{ height: "calc(100vh - 88px - 16px)" }}>
-            {associationsList.length > 0
+        <Grid
+          container
+          spacing={2}
+          sx={{ marginTop: "0", flex: "1", justifySelf: "center" }}
+        >
+          <Grid item xs={12}>
+            <Button
+              onClick={() => handleFilterexpansion()}
+              endIcon={filtersExpanded ? <ExpandLess /> : <ExpandMore />}
+            >
+              Filtres
+            </Button>
+            <Collapse in={filtersExpanded} timeout="auto" unmountOnExit>
+              <Stack
+                direction="row"
+                spacing={2}
+                sx={{ marginTop: "8px", width: "100%" }}
+              >
+                <TextField
+                  variant="standard"
+                  size="small"
+                  label="codes postaux"
+                  value={postCodeInputValue}
+                  onChange={(e) => handlePostCodeInputChange(e.target.value)}
+                ></TextField>
+              </Stack>
+            </Collapse>
+          </Grid>
+          <Grid
+            item
+            xs={4}
+            sx={{ display: "flex", height: "calc(100vh - 88px - 16px - 36px)" }}
+          >
+            {filteredAssociationsList.length > 0
               ? SearchResults(
-                  associationsList,
-                  totalResults,
-                  page,
-                  setPage,
+                  filteredAssociationsList,
+                  filteredAssociationsList.length,
+                  displayedPage,
+                  setDisplayedPage,
                   rowsPerPage,
                   setRowsPerPage,
                   setSelectedAssociation
                 )
               : null}
           </Grid>
-          <Grid item xs={8} sx={{ height: "calc(100vh - 88px - 16px)" }}>
+          <Grid item xs={8} sx={{ height: "calc(100vh - 88px - 16px - 36px)" }}>
             {selectedAssociation.id !== 0
               ? FicheAssociation(selectedAssociation)
               : null}

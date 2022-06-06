@@ -13,20 +13,19 @@ import Association from "../models/Association";
 export const SearchResults = (
   resultsList: Association[],
   totalResults: number,
-  page: number,
-  setPage: React.Dispatch<React.SetStateAction<number>>,
+  displayedPage: number,
+  setDisplayedPage: React.Dispatch<React.SetStateAction<number>>,
   rowsPerPage: number,
   setRowsPerPage: React.Dispatch<React.SetStateAction<number>>,
   setSelectedAssociation: React.Dispatch<React.SetStateAction<Association>>
 ) => {
-
   const handlePageChange = (event: any, value: number) => {
-    setPage(value);
+    setDisplayedPage(value);
   };
 
   const handleRowsPerPageChange = (event: any) => {
     setRowsPerPage(event.target.value);
-    setPage(0);
+    setDisplayedPage(0);
   };
 
   const handleResultsListItemClick = (assoId: number) => {
@@ -40,19 +39,9 @@ export const SearchResults = (
   };
 
   return (
-    // <div
-    //   style={{
-    //     height: "100%",
-    //     display: "flex",
-    //     flexDirection: "column",
-    //     overflow: "hidden",
-    //     backgroundColor: "#fff",
-    //   }}
-    // >
     <Paper
       component="div"
       elevation={1}
-      // sx={{ zIndex: "1000" }}
       sx={{
         height: "100%",
         display: "flex",
@@ -64,7 +53,7 @@ export const SearchResults = (
       <TablePagination
         component="div"
         count={totalResults}
-        page={page}
+        page={displayedPage}
         rowsPerPage={rowsPerPage}
         labelRowsPerPage={null}
         onRowsPerPageChange={handleRowsPerPageChange}
@@ -79,54 +68,59 @@ export const SearchResults = (
       <List className="search-results" sx={{ flex: "1", overflow: "auto" }}>
         <Divider />
         {resultsList && resultsList.length > 0
-          ? resultsList.map((asso: Association) => {
-              return (
-                <>
-                  <ListItemButton
-                    className="results-list-item"
-                    onClick={() => handleResultsListItemClick(asso.id)}
-                    key={asso.id}
-                  >
-                    <ListItem
-                      title={asso.titre}
+          ? resultsList
+              .slice(
+                displayedPage * rowsPerPage,
+                (displayedPage + 1) * rowsPerPage - 1
+              )
+              .map((asso: Association) => {
+                return (
+                  <>
+                    <ListItemButton
+                      className="results-list-item"
+                      onClick={() => handleResultsListItemClick(asso.id)}
                       key={asso.id}
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "flex-start",
-                        alignItems: "flex-start",
-                      }}
                     >
-                      <Typography
-                        component="div"
-                        noWrap
-                        style={{ width: "100%" }}
+                      <ListItem
+                        title={asso.titre}
+                        key={asso.id}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "flex-start",
+                          alignItems: "flex-start",
+                        }}
                       >
-                        {asso.titre}
-                      </Typography>
-                      <Typography component="div">
-                        {asso.idAssociation}{" "}•{" "}<span>
-                          <Chip
-                            color={asso.isWaldec ? "success" : "warning"}
-                            label={asso.isWaldec ? "waldec" : "import"}
-                            size="small"
-                            variant="outlined"
-                          />
-                        </span>
-                      </Typography>
-                      <Typography>
-                        {asso.adresseLibelleCommune} (
-                        {asso.adresseCodePostal.slice(0, 2)})
-                      </Typography>
-                    </ListItem>
-                  </ListItemButton>
-                  <Divider />
-                </>
-              );
-            })
+                        <Typography
+                          component="div"
+                          noWrap
+                          style={{ width: "100%" }}
+                        >
+                          {asso.titre}
+                        </Typography>
+                        <Typography component="div">
+                          {asso.idAssociation} •{" "}
+                          <span>
+                            <Chip
+                              color={asso.isWaldec ? "success" : "warning"}
+                              label={asso.isWaldec ? "waldec" : "import"}
+                              size="small"
+                              variant="outlined"
+                            />
+                          </span>
+                        </Typography>
+                        <Typography>
+                          {asso.adresseLibelleCommune} (
+                          {asso.adresseCodePostal.slice(0, 2)})
+                        </Typography>
+                      </ListItem>
+                    </ListItemButton>
+                    <Divider />
+                  </>
+                );
+              })
           : null}
       </List>
     </Paper>
-    // </div>
   );
 };

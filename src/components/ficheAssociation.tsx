@@ -8,6 +8,7 @@ import {
   IconButton,
   Typography,
   Box,
+  Chip,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
@@ -33,7 +34,19 @@ export const FicheAssociation = (association: Association) => {
       <Card sx={{ maxHeight: "100%", overflow: "auto" }}>
         <CardHeader
           title={association.titre}
-          subheader={association.idAssociation}
+          subheader={
+            <>
+              {association.idAssociation} •{" "}
+              <span>
+                <Chip
+                  color={association.isWaldec ? "success" : "warning"}
+                  label={association.isWaldec ? "waldec" : "import"}
+                  size="small"
+                  variant="outlined"
+                />
+              </span>
+            </>
+          }
           action={
             <IconButton aria-label="settings">
               <MoreVertIcon />
