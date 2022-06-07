@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+import { LatLngTuple } from "leaflet";
 
 import Association from "./models/Association";
 import useXhrRna from "./hooks/useXhrRna";
@@ -19,6 +21,9 @@ import "./App.css";
 import { Header } from "./components/Header";
 import { SearchResults } from "./components/SearchResults";
 import { FicheAssociation } from "./components/FicheAssociation";
+import useUrlAdr from "./hooks/useUrlAdr";
+import useXhrAdr from "./hooks/useXhrAdr";
+import { useMap, useMapEvent } from "react-leaflet";
 
 function App() {
   const [searchInputValue, setSearchInputValue] = useState("");
@@ -34,6 +39,19 @@ function App() {
   const [selectedAssociation, setSelectedAssociation] = useState(
     new Association()
   );
+  let emptyCoordinates: LatLngTuple = [0, 0];
+  const [coordinates, setCoordinates] = useState(emptyCoordinates);
+
+  const MapComponent = (props: { id: string }) => {
+    const map = useMap();
+    map.setView(coordinates);
+    return <div id={props.id}></div>;
+  };
+  const urlAdr = useUrlAdr(
+    selectedAssociation.adresseGestionLibelleVoie,
+    selectedAssociation.adresseCodeInsee
+  );
+  useXhrAdr(urlAdr, coordinates, setCoordinates);
 
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [postCodeInputValue, setPostCodeInputValue] = useState("");
@@ -140,7 +158,7 @@ function App() {
           </Grid>
           <Grid item xs={8} sx={{ height: "calc(100vh - 88px - 16px - 36px)" }}>
             {selectedAssociation.id !== 0
-              ? FicheAssociation(selectedAssociation)
+              ? FicheAssociation(selectedAssociation, coordinates, MapComponent)
               : null}
           </Grid>
           <Grid item xs={12}>

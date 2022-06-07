@@ -23,7 +23,7 @@ export default class RnaConnector {
     if (typeof obj !== "undefined") {
       obj.xhr.open("GET", obj.url);
       obj.xhr.send();
-      // console.log(`sending : ${obj.url}`);
+      console.log(`sending : ${obj.url}`);
     }
     return new Promise(() => setTimeout(() => this.sendRequest(), 150));
   }

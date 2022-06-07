@@ -11,11 +11,16 @@ import {
   Chip,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 
 import Association from "../models/Association";
+import { LatLngTuple } from "leaflet";
 
-export const FicheAssociation = (association: Association) => {
+export const FicheAssociation = (
+  association: Association,
+  coordinates: LatLngTuple,
+  MapComponent: (props: { id: string }) => JSX.Element
+) => {
   return (
     <>
       <Helmet>
@@ -122,16 +127,17 @@ export const FicheAssociation = (association: Association) => {
         <CardMedia>
           <Box sx={{ margin: "16px auto" }}>
             <MapContainer
-              center={[51.505, -0.09]}
+              center={[50.5, 30.5]}
               zoom={13}
               scrollWheelZoom={false}
               style={{ height: "360px" }}
             >
+              <MapComponent id="map-component" />
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              <Marker position={[51.505, -0.09]}>
+              <Marker position={coordinates}>
                 <Popup>
                   A pretty CSS3 popup. <br /> Easily customizable.
                 </Popup>
